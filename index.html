@@ -1,0 +1,156 @@
+<html>
+
+  <head>
+    <style>
+      body{ margin: 0px; }
+      html{ overflow: hidden }
+    </style>
+  </head>
+
+  <body>
+
+    <div id="container"></div>
+
+    <script src="lib/three.min.js"                  ></script>
+    <script src="lib/leap.min.js"                   ></script>
+    <script src="lib/jquery.min.js"                 ></script>
+    <script src="lib/ShaderLoader.js"               ></script>
+    <script src="LeapFingers.js"                    ></script>
+    <script src="TouchPlane.js"                     ></script>
+
+    <script>
+
+      var loaded = 0;
+      var neededToLoad = 1;
+
+      var uniforms = {
+
+        dT:   { type:"f" , value: 0 },
+        time: { type:"f" , value: 0 },
+        fingers:{ type:"v3", value:[] },
+
+      }
+
+      var G = uniforms;
+      var REPELERS = [];
+      
+      var camera, renderer, scene , controls;
+        
+      var v1 = new THREE.Vector3();
+      var v2 = new THREE.Vector3();
+
+      var shaders = new ShaderLoader( 'shaders' , 'shaderChunks'   );
+
+      var leap = new Leap.Controller();
+
+      shaders.shaderSetLoaded = function(){
+
+        onLoad();
+
+      }
+
+      onLoad();
+        
+
+      function init(){
+
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+
+        camera = new THREE.PerspectiveCamera( 65 , w/h , .1 , 100 );
+        camera.position.z = 10;
+        camera.position.y = 10;
+
+        camera.lookAt( new THREE.Vector3() );
+
+        scene = new THREE.Scene();
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setPixelRatio( window.devicePixelRatio );
+
+
+        container = document.getElementById( 'container' );
+        
+        document.body.appendChild( renderer.domElement );
+        window.addEventListener( 'resize', onWindowResize , false );
+        window.addEventListener( 'keydown', onKeyDown , false );
+
+        onWindowResize();
+
+        clock = new THREE.Clock();
+
+
+        fingers = new LeapFingers();
+
+        fingers.addToScene( scene );
+        leap.connect();
+
+        var position = new THREE.Vector3();
+        var normal = new THREE.Vector3( 0 , 1 , 0 );
+        var x = 100;
+        var y = 100;
+        var bufferDistance = .1
+        touchPlane = new TouchPlane( position , normal , x , y , bufferDistance );
+        scene.add( touchPlane.body )
+
+      }
+
+      function animate(){
+
+        G.dT.value = clock.getDelta();
+        G.time.value += G.dT.value;
+        G.counter.value ++;
+
+        var f = leap.frame();
+
+        fingers.update( f );
+
+
+        renderer.render( scene , camera );
+
+        requestAnimationFrame( animate );
+
+
+      }
+
+      
+       // Resets the renderer to be the proper size
+      function onWindowResize(){
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+      }
+
+      function onKeyDown(e){
+
+        console.log( e.keyCode );
+        
+        if( e.keyCode == 32 ){
+
+          simulationActive = !simulationActive;
+
+        }
+
+
+      }
+
+
+      function onLoad(){
+
+        loaded ++;
+        
+        if( loaded == neededToLoad ){
+          init();
+          animate();
+        }
+
+      }
+
+    </script>
+
+  </body>
+</html>
