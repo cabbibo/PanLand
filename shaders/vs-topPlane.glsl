@@ -63,7 +63,7 @@ void main(){
 
 	float push = 0.;
 
-	float cutoff = .05;
+	float cutoff = .2;
 
 	if( len < cutoff ){
 		push = pow( ( cutoff - len ) / cutoff , 2. );

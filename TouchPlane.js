@@ -3,13 +3,16 @@ function TouchPlane( touchers , position , normal , x , y , bufferDistance ){
   this.touchers = touchers;
 	this.body = new THREE.Object3D();
 
+
+  this.uniforms =  {
+      touchers:{ type:"v3v" , value: touchers },
+      touching:{ type: "f" , value: 0 }
+    }
   var vs = shaders.setValue( shaders.vs.topPlane , 'SIZE' , touchers.length )
   var fs = shaders.setValue( shaders.fs.topPlane , 'SIZE' , touchers.length )
 	var geo = new THREE.PlaneBufferGeometry( x , y , x * 1000 , y * 1000 );
 	var mat = new THREE.ShaderMaterial({
-    uniforms:{
-      touchers:{ type:"v3v" , value: touchers }
-    },
+    uniforms: this.uniforms,
 		vertexShader: vs,
     fragmentShader: fs,
     transparent: true
@@ -29,6 +32,7 @@ function TouchPlane( touchers , position , normal , x , y , bufferDistance ){
 
   this.basePlane.rotation.x = -Math.PI / 2;
   this.basePlane.position.y = -bufferDistance;
+ // this.basePlane.visible = false;
 
   this.body.add( this.basePlane );
   this.body.add( this.topPlane );
@@ -87,10 +91,13 @@ TouchPlane.prototype.update = function(){
 
     this.velocity.add( this.getPerpComponent( this.v3 ).multiplyScalar( .1 ) );
 
-    this.basePlane.material.color.setRGB( 1 , 1 , 1 )
+    this.basePlane.material.color.setRGB( .8 , .1 , 0 )
+    this.uniforms.touching.value = 1;
 
   }else{
-    this.basePlane.material.color.setRGB( 1 , .5 , 0 )
+    this.basePlane.material.color.setRGB( .5 , .2 , 0 )
+        this.uniforms.touching.value = 0;
+
   }
 
 
