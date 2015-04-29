@@ -40,7 +40,8 @@
       var v2 = new THREE.Vector3();
 
       var shaders = new ShaderLoader( 'shaders' , 'shaderChunks'   );
-
+      shaders.load( 'vs-topPlane' , 'topPlane' , 'vertex' );
+      shaders.load( 'fs-topPlane' , 'topPlane' , 'fragment' );
       var leap = new Leap.Controller();
 
       shaders.shaderSetLoaded = function(){
@@ -49,8 +50,7 @@
 
       }
 
-      onLoad();
-        
+
 
       function init(){
 
@@ -58,8 +58,8 @@
         var h = window.innerHeight;
 
         camera = new THREE.PerspectiveCamera( 65 , w/h , .1 , 100 );
-        camera.position.z = 10;
-        camera.position.y = 10;
+        camera.position.z = .5;
+        camera.position.y = .2;
 
         camera.lookAt( new THREE.Vector3() );
 
@@ -86,12 +86,20 @@
         fingers.addToScene( scene );
         leap.connect();
 
-        var position = new THREE.Vector3();
+        var position = new THREE.Vector3(0, 0 , 0);
         var normal = new THREE.Vector3( 0 , 1 , 0 );
-        var x = 100;
-        var y = 100;
-        var bufferDistance = .1
-        touchPlane = new TouchPlane( position , normal , x , y , bufferDistance );
+        var x = 1;
+        var y = 1;
+        var bufferDistance = .03;
+
+        touchPlane = new TouchPlane( 
+          fingers.tips , 
+          position , 
+          normal , 
+          x , y , 
+          bufferDistance 
+        );
+
         scene.add( touchPlane.body )
 
       }
@@ -100,12 +108,12 @@
 
         G.dT.value = clock.getDelta();
         G.time.value += G.dT.value;
-        G.counter.value ++;
+
 
         var f = leap.frame();
 
         fingers.update( f );
-
+        touchPlane.update();
 
         renderer.render( scene , camera );
 

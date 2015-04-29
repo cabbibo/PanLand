@@ -1,16 +1,20 @@
 function LeapFingers(){
 
+  this.v1 = new THREE.Vector3();
+
   this.VR = false;
   this.fingers = [];
   this.positions = [];
+  this.tips = [];
 
-  var geo = new THREE.IcosahedronGeometry( .1 , 1 )
+  var geo = new THREE.IcosahedronGeometry( .005 , 1 )
   var mat = new THREE.MeshNormalMaterial();
 
   for( var i = 0; i < 50; i++ ){
     var mesh = new THREE.Mesh( geo , mat );
     this.fingers.push( mesh );
     this.positions.push( mesh.position );
+    if( i % 5 == 4 ){ this.tips.push( mesh.position ); }
   }
 
 
@@ -42,21 +46,21 @@ LeapFingers.prototype.updateFingers = function( fingerArray , frame , VR ){
       var bI =  i % 5 ;                     // Bone index
       var fI = Math.floor( i / 5 );     // finger index
 
-      var p = leapToScene( frame , frame.hands[0].fingers[fI].positions[bI] );
+      var p = this.leapToScene( frame , frame.hands[0].fingers[fI].positions[bI] );
 
       if( VR == true ){
         
         // z is y || x is x ||  y is -z
-        tv1.set( -p[0] , -p[2] , -p[1] );
+        this.v1.set( -p[0] , -p[2] , -p[1] );
         r.copy( camera.position );
-        tv1.applyQuaternion( camera.quaternion );
-        r.add( tv1 );
+        this.v1.applyQuaternion( camera.quaternion );
+        r.add( this.v1 );
 
       }else{ 
 
         r.copy( camera.position );
-        tv1.set( p[0] , p[1] -.3 , p[2] - .3 );
-        r.add( tv1 );
+        this.v1.set( p[0] , p[1] -.3 , p[2] - .3 );
+        r.add( this.v1 );
 
       }
       
@@ -84,21 +88,21 @@ LeapFingers.prototype.updateFingers = function( fingerArray , frame , VR ){
         var bI =  i % 5 ;                   // Bone index
         var fI = Math.floor( i / 5 );       // finger index
 
-        var p = leapToScene( frame , frame.hands[1].fingers[fI].positions[bI] );
+        var p = this.leapToScene( frame , frame.hands[1].fingers[fI].positions[bI] );
 
       if( VR == true ){
         
         // z is y || x is x ||  y is -z
-        tv1.set( -p[0] , -p[2] , -p[1] );
+        this.v1.set( -p[0] , -p[2] , -p[1] );
         r.copy( camera.position );
-        tv1.applyQuaternion( camera.quaternion );
-        r.add( tv1 );
+        this.v1.applyQuaternion( camera.quaternion );
+        r.add( this.v1 );
 
       }else{ 
 
         r.copy( camera.position );
-        tv1.set( p[0] , p[1] -.3 , p[2] - .3 );
-        r.add( tv1 );
+        this.v1.set( p[0] , p[1] -.3 , p[2] - .3 );
+        r.add( this.v1 );
 
       }
 
