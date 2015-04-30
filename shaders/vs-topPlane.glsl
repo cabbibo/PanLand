@@ -2,6 +2,7 @@
 const int size = @SIZE;
 uniform vec3 touchers[ size ];
 uniform float bufferDistance;
+uniform float distanceCutoff;
 
 varying vec2 vUv;
 varying float vDist;
@@ -44,11 +45,11 @@ float getDisplacement( vec3 n , vec3 pos ){
 
 
 		//float push = 0.;
-		float cutoff = .2;
+		//float cutoff = .2;
     float len = length( para );
 
-		if( len <= cutoff ){
-			push = pow( ( cutoff - len ) / cutoff , 3. );
+		if( len <= distanceCutoff ){
+			push = pow( ( distanceCutoff - len ) / distanceCutoff , 3. );
 		}
 
     pd = min( pd , d * push );

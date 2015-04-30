@@ -2,17 +2,35 @@ function TouchPlane( touchers , body , xy , bufferDistance ){
 	
   this.touchers = touchers;
 
-  this.touchPoints      = [];
-  this.oTouchPoints     = [];
-  this.touchInfo        = [];
+  this.touchPoints          = [];
+  this.oTouchPoints         = [];
+  this.touchInfo            = [];
 
-  this.touchDownEvents  = [];
-  this.touchUpEvents    = [];
-  this.touchingEvents   = [];
 
-  this.hoverDownEvents  = [];
-  this.hoverUpEvents    = [];
-  this.hoveringEvents   = [];
+  // EVENT ARRAYS
+  this.touchDownEvents      = [];
+  this.touchUpEvents        = [];
+  this.touchingEvents       = [];
+
+  this.hoverDownEvents      = [];
+  this.hoverUpEvents        = [];
+  this.hoveringEvents       = [];
+
+  this.firstHoverDownEvents = [];
+  this.lastHoverUpEvents    = [];
+  
+  this.firstTouchDownEvents = [];
+  this.lastTouchUpEvents    = [];
+
+  this.firstTouchingEvents  = [];
+  this.firstHoveringEvents  = [];
+
+  this.firstTouchingID = 0;
+  this.firstHoveringID = 0;
+
+  this.touchingIDs = [];
+  this.hoveringIDs = [];
+
 
 
   for( var i = 0; i < this.touchers.length; i++ ){
@@ -51,13 +69,15 @@ function TouchPlane( touchers , body , xy , bufferDistance ){
 
 TouchPlane.prototype.update = function(){
 
-  this.normal.set( 0 , 0 , 1 )
-  this.xVec.set( 1 , 0 , 0 )
-  this.yVec.set( 0 , 1 , 0 )
+  this.normal.set( 0 , 0 , 1 );
+  this.xVec.set( 1 , 0 , 0 );
+  this.yVec.set( 0 , 1 , 0 );
+
   this.basePoint.set( 0 , 0 , -this.bufferDistance );
 
   
   this.v1.set( 0 , 0, 0);
+
   // Make sure our Vectors are facing the right directions
 
   this.body.updateMatrixWorld();
@@ -72,10 +92,6 @@ TouchPlane.prototype.update = function(){
   this.normal.sub( this.v1 );
   this.xVec.sub( this.v1 );
   this.yVec.sub( this.v1 );
-
-
- // this.basePoint.applyQuaternion( this.body.quaternion );
- // this.basePoint.add( this.body.position );
 
 
   for( var  i = 0; i < this.touchers.length; i++ ){
@@ -105,7 +121,8 @@ TouchPlane.prototype.update = function(){
       }
 
       if( oD > 0 && d <= 0 ){
-        this._touchDown( this.touchPoints[i] , i )
+        var XY = this.getXY( this.touchPoints[i] )
+        this._touchDown( this.touchPoints[i] , XY , i )
       }
 
       if( oD < 0 && d >= 0 ){
@@ -115,11 +132,16 @@ TouchPlane.prototype.update = function(){
       if( oD < 0  && d < 0 ){
 
         this.v3.copy( this.touchPoints[i] );
-        this.v3.sub( this.oTouchPoints[i] )
+        this.v3.sub( this.oTouchPoints[i] );
+
 
         var dXY = this.getXY( this.v3 );
 
-        this._touching( this.touchPoints[i] , i , this.v3 , dXY , dD );
+        this.v3.copy( this.touchPoints[i] );
+        this.v3.sub( this.basePoint );
+        var XY = this.getXY( this.v3 )
+
+        this._touching( this.touchPoints[i] , i , this.v3 , XY , dXY , dD );
 
       }
 
@@ -145,20 +167,32 @@ TouchPlane.prototype.update = function(){
 
 
 
-TouchPlane.prototype._touchDown = function( pos , id ){
+TouchPlane.prototype._touchDown = function( pos , XY , id ){
 
   this.touchInfo[id].touching = true;
   this.touchInfo[id].touchStartTime = Date.now();
+
+  if( this.touchingIDs.length == 0 ){
+    this._firstTouchDown( pos , XY , id );
+  }
+
+  this.touchingIDs.push( id );
+
  // console.log( this.touchInfo[id].touchStartTime );
 
   for( var i = 0; i < this.touchDownEvents.length; i++ ){
 
     this.touchDownEvents[i]({
-      position: pos,
-      id: id
+      position  : pos,
+      XY        : XY,
+      x         : XY[0],
+      y         : XY[1],
+      id        : id
     });
 
   }
+
+
 
 }
 
@@ -176,11 +210,53 @@ TouchPlane.prototype._touchUp = function( pos , id ){
 
   }
 
+
+  // Making sure we get the last touch up,
+  // Incase we don't care about individual touches
+  for( var i = 0; i < this.touchingIDs.length; i++ ){
+    if( this.touchingIDs[i] == id ){
+      this.touchingIDs.splice( i , 1 );
+    }
+  }
+
+  if( this.touchingIDs.length == 0 ){
+    this._lastTouchUp( pos , id );
+  }
+
+}
+
+TouchPlane.prototype._firstTouchDown = function( pos , XY , id ){
+
+  this.firstTouchingID = id;
+  for( var i = 0; i < this.firstTouchDownEvents.length; i++ ){
+
+    this.firstTouchDownEvents[i]({
+      position  : pos,
+      XY        : XY,
+      x         : XY[0],
+      y         : XY[1],
+      id        : id
+    });
+
+  }
+
+}
+
+TouchPlane.prototype._lastTouchUp = function( pos , id ){
+
+  for( var i = 0; i < this.lastTouchUpEvents.length; i++ ){
+
+    this.lastTouchUpEvents[i]({
+      position: pos,
+      id: id
+    });
+
+  }
+
 }
 
 
-
-TouchPlane.prototype._touching = function( pos , id , dPos , dXY , dD ){
+TouchPlane.prototype._touching = function( pos , id , dPos , XY ,  dXY  , dD ){
 
   var timeTouching = Date.now() - this.touchInfo[id].touchStartTime;
 
@@ -194,10 +270,37 @@ TouchPlane.prototype._touching = function( pos , id , dPos , dXY , dD ){
       dXY       : dXY,
       dX        : dXY[0],
       dY        : dXY[1],
+      XY        : XY,
+      x         : XY[0],
+      y         : XY[1],
       dDistance : dD,
       timeTouching: timeTouching
 
     });
+
+  }
+
+  if( id == this.firstTouchingID ){
+
+    for( var i = 0; i < this.firstTouchingEvents.length; i++ ){
+
+      this.firstTouchingEvents[i]({
+
+        position  : pos, 
+        id        : id,
+        dPosition : dPos,
+        dXY       : dXY,
+        dX        : dXY[0],
+        dY        : dXY[1],
+        XY        : XY,
+        x         : XY[0],
+        y         : XY[1],
+        dDistance : dD,
+        timeTouching: timeTouching
+
+      });
+
+    }
 
   }
 
@@ -206,6 +309,12 @@ TouchPlane.prototype._touching = function( pos , id , dPos , dXY , dD ){
 TouchPlane.prototype._hoverDown = function( pos , id  ){
 
   this.touchInfo[id].hovering = true;
+
+  if( this.hoveringIDs.length == 0 ){
+    this._firstHoverDown( pos , id );
+  }
+
+  this.hoveringIDs.push( id );
 
   for( var i = 0; i < this.hoverDownEvents.length; i++ ){
 
@@ -231,6 +340,46 @@ TouchPlane.prototype._hoverUp = function( pos ,  id   ){
 
   }
 
+  // Making sure we get the last hover up,
+  // Incase we don't care about individual touches
+  for( var i = 0; i < this.hoveringIDs.length; i++ ){
+    if( this.hoveringIDs[i] == id ){
+      this.hoveringIDs.splice( i , 1 );
+    }
+  }
+
+  if( this.hoveringIDs.length == 0 ){
+    this._lastHoverUp( pos , id );
+  }
+
+}
+
+TouchPlane.prototype._firstHoverDown = function( pos , id ){
+
+  this.firstHoveringID = id;
+
+  for( var i = 0; i < this.firstHoverDownEvents.length; i++ ){
+
+    this.firstHoverDownEvents[i]({
+      position  : pos,
+      id        : id
+    });
+
+  }
+
+}
+
+TouchPlane.prototype._lastHoverUp = function( pos , id ){
+
+  for( var i = 0; i < this.lastHoverUpEvents.length; i++ ){
+
+    this.lastHoverUpEvents[i]({
+      position: pos,
+      id: id
+    });
+
+  }
+
 }
 
 TouchPlane.prototype._hovering = function( pos , id , distance , dD ){
@@ -246,6 +395,22 @@ TouchPlane.prototype._hovering = function( pos , id , distance , dD ){
 
   }
 
+  if( id == this.firstHoveringID ){
+
+    for( var i = 0; i < this.firstHoveringEvents.length; i++ ){
+
+      this.firstHoveringEvents[i]({
+        position: pos,
+        id: id,
+        distance: distance,
+        dDistance : dD
+      });
+
+    }
+
+  }
+
+
 }
 
 TouchPlane.prototype.addTouchDownEvent = function( e ){ 
@@ -254,6 +419,18 @@ TouchPlane.prototype.addTouchDownEvent = function( e ){
 
 TouchPlane.prototype.addTouchUpEvent = function( e ){ 
   this.touchUpEvents.push( e );
+}
+
+TouchPlane.prototype.addFirstTouchDownEvent = function( e ){ 
+  this.firstTouchDownEvents.push( e );
+}
+
+TouchPlane.prototype.addFirstTouchingEvent = function( e ){ 
+  this.firstTouchingEvents.push( e );
+}
+
+TouchPlane.prototype.addLastTouchUpEvent = function( e ){ 
+  this.lastTouchUpEvents.push( e );
 }
 
 TouchPlane.prototype.addTouchingEvent = function( e ){ 
@@ -268,8 +445,69 @@ TouchPlane.prototype.addHoverUpEvent = function( e ){
   this.hoverUpEvents.push( e );
 }
 
+TouchPlane.prototype.addFirstHoverDownEvent = function( e ){ 
+  this.firstHoverDownEvents.push( e );
+}
+
+TouchPlane.prototype.addFirstHoveringEvent = function( e ){ 
+  this.firstHoveringEvents.push( e );
+}
+
+TouchPlane.prototype.addLastHoverUpEvent = function( e ){ 
+  this.lastHoverUpEvents.push( e );
+}
+
 TouchPlane.prototype.addHoveringEvent = function( e ){ 
   this.hoveringEvents.push( e );
+}
+
+
+TouchPlane.prototype.removeTouchDownEvent = function( e ){ 
+  this.removeEvent( 'touchDownEvents' , e ); 
+}
+
+TouchPlane.prototype.removeTouchUpEvent = function( e ){ 
+  this.removeEvent( 'touchUpEvents' , e );
+}
+
+TouchPlane.prototype.removeFirstTouchDownEvent = function( e ){ 
+  this.removeEvent( 'firstTouchDownEvents' , e );
+}
+
+TouchPlane.prototype.removeLastTouchUpEvent = function( e ){ 
+  this.removeEvent( 'lastTouchUpEvents' , e );
+}
+
+TouchPlane.prototype.removeFirstTouchingEvent = function( e ){ 
+  this.removeEvent( 'firstTouchingEvents' , e );
+}
+
+TouchPlane.prototype.removeTouchingEvent = function( e ){ 
+  this.removeEvent( 'touchingEvents' , e );
+}
+
+TouchPlane.prototype.removeHoverDownEvent = function( e ){ 
+  this.removeEvent( 'hoverDownEvents' , e ); 
+}
+
+TouchPlane.prototype.removeHoverUpEvent = function( e ){ 
+  this.removeEvent( 'hoverUpEvents' , e );
+}
+
+TouchPlane.prototype.removeFirstHoverDownEvent = function( e ){ 
+  this.removeEvent( 'firstHoverDownEvents' , e );
+}
+
+TouchPlane.prototype.removeLastHoverUpEvent = function( e ){ 
+  this.removeEvent( 'lastHoverUpEvents' , e );
+}
+
+TouchPlane.prototype.removeFirstHoveringEvent = function( e ){ 
+  this.removeEvent( 'firstHoveringEvents' , e );
+}
+
+TouchPlane.prototype.removeHoveringEvent = function( e ){ 
+  this.removeEvent( 'hoveringEvents' , e );
 }
 
 TouchPlane.prototype.removeEvent = function( array , e ){
@@ -288,10 +526,8 @@ TouchPlane.prototype.removeEvent = function( array , e ){
 
 
 
-TouchPlane.prototype.assignTouchInfo = function(){
 
 
-}
 
 
 TouchPlane.prototype.checkDistanceToPlane = function( point ){

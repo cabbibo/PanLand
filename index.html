@@ -22,6 +22,7 @@
     <script src="TouchPlaneBody.js"                 ></script>
     <script src="PanPlane.js"                       ></script>
     <script src="Button.js"                         ></script>
+    <script src="Slider.js"                         ></script>
 
 
 
@@ -48,11 +49,16 @@
       var v2 = new THREE.Vector3();
 
       var shaders = new ShaderLoader( 'shaders' , 'shaderChunks'   );
+
       shaders.load( 'vs-topPlane' , 'topPlane' , 'vertex' );
       shaders.load( 'fs-topPlane' , 'topPlane' , 'fragment' );
 
       shaders.load( 'vs-button' , 'button' , 'vertex' );
       shaders.load( 'fs-button' , 'button' , 'fragment' );
+
+      shaders.load( 'vs-slider' , 'slider' , 'vertex' );
+      shaders.load( 'fs-slider' , 'slider' , 'fragment' );
+
       var leap = new Leap.Controller();
 
       shaders.shaderSetLoaded = function(){
@@ -130,7 +136,7 @@
         var plane = new THREE.Mesh( geo , mat );
 
         plane.position.z = -bufferDistance/1.1;
-        panPlane = new PanPlane( plane , touchPlane );
+        panPlane = new PanPlane( plane , touchPlane , true );
 
 
         var body = new THREE.Object3D();
@@ -142,6 +148,20 @@
 
         button = new Button("TEST", 1, fingers.tips , body , .03);
         plane.add( button.body );
+
+
+
+        var size = .2;
+        var body = new THREE.Object3D();
+        body.position.y = .4;
+        body.position.z = .2;
+        body.position.x = .2;
+        body.rotation.x = Math.PI / 2;
+
+        body.position.y += size * 5 * .5
+
+        slider = new Slider( size , fingers.tips , body , .01 );
+        plane.add( slider.body );
 
       }
 
@@ -157,6 +177,7 @@
         touchPlane.update();
         panPlane.update();
         button.update();
+        slider.update();
 
         renderer.render( scene , camera );
 

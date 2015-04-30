@@ -10,7 +10,8 @@ function TouchPlaneBody( touchPlane ){
   this.uniforms =  {
     touchers:{ type:"v3v" , value: touchers },
     touching:{ type: "f" , value: 0 },
-    bufferDistance: { type:"f" , value: tp.bufferDistance }
+    bufferDistance: { type:"f" , value: tp.bufferDistance },
+    distanceCutoff: { type:"f", value: .2 }
   }
 
   var vs = shaders.setValue( shaders.vs.topPlane , 'SIZE' , touchers.length );
