@@ -26,9 +26,7 @@ float getDisplacement( vec3 n , vec3 pos ){
 
 
   float push = 0.;
- // float dist = 0.;
-
-  float pd = 0.;
+  float dist = 0.;
 
 	for( int  i = 0; i < size; i++ ){
 		  
@@ -40,22 +38,20 @@ float getDisplacement( vec3 n , vec3 pos ){
 
 		float d = distanceToPlane( n , pos , touch , perp , para );
     //dist = d;
-    //dist = min( dist , d );
+    dist = min( dist , d );
 
 
 		//float push = 0.;
 		float cutoff = .2;
     float len = length( para );
 
-		if( len <= cutoff ){
-			push = pow( ( cutoff - len ) / cutoff , 3. );
+		if( len < cutoff ){
+			push = max( push , pow( ( cutoff - len ) / cutoff , 3. ) );
 		}
-
-    pd = min( pd , d * push );
 
 	}
 
-  float toReturn = max( -bufferDistance  , pd  );
+  float toReturn = max( -bufferDistance  , dist * push );
 
   return toReturn;
 

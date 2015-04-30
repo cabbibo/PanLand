@@ -14,6 +14,7 @@ function LeapFingers(){
     var mesh = new THREE.Mesh( geo , mat );
     this.fingers.push( mesh );
     this.positions.push( mesh.position );
+    mesh.position.set(  1000000  ,  1000000  , 1000000 );
     if( i % 5 == 4 ){ this.tips.push( mesh.position ); }
   }
 
@@ -114,7 +115,7 @@ LeapFingers.prototype.updateFingers = function( fingerArray , frame , VR ){
 
        var r = fingerArray[i+25];
 
-       r.set( 0 , 0 , 10000 )
+       r.set(  1000000  ,  1000000  , 10000 )
 
      }
 

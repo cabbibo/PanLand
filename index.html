@@ -15,8 +15,16 @@
     <script src="lib/leap.min.js"                   ></script>
     <script src="lib/jquery.min.js"                 ></script>
     <script src="lib/ShaderLoader.js"               ></script>
+    <script src="lib/TextCreator.js"                ></script>
+
     <script src="LeapFingers.js"                    ></script>
     <script src="TouchPlane.js"                     ></script>
+    <script src="TouchPlaneBody.js"                 ></script>
+    <script src="PanPlane.js"                       ></script>
+    <script src="Button.js"                         ></script>
+
+
+
 
     <script>
 
@@ -42,6 +50,9 @@
       var shaders = new ShaderLoader( 'shaders' , 'shaderChunks'   );
       shaders.load( 'vs-topPlane' , 'topPlane' , 'vertex' );
       shaders.load( 'fs-topPlane' , 'topPlane' , 'fragment' );
+
+      shaders.load( 'vs-button' , 'button' , 'vertex' );
+      shaders.load( 'fs-button' , 'button' , 'fragment' );
       var leap = new Leap.Controller();
 
       shaders.shaderSetLoaded = function(){
@@ -58,8 +69,8 @@
         var h = window.innerHeight;
 
         camera = new THREE.PerspectiveCamera( 65 , w/h , .1 , 100 );
-        camera.position.z = .3;
-        camera.position.y = .2;
+        camera.position.z = .2;
+        camera.position.y = 0.1;
 
         camera.lookAt( new THREE.Vector3() );
 
@@ -68,6 +79,8 @@
         renderer = new THREE.WebGLRenderer();
         renderer.setSize( window.innerWidth, window.innerHeight );
         renderer.setPixelRatio( window.devicePixelRatio );
+
+        textCreator =  new TextCreator( 100 );
 
 
         container = document.getElementById( 'container' );
@@ -92,15 +105,43 @@
         var y = 1;
         var bufferDistance = .03;
 
+        var body = new THREE.Object3D();
+        body.rotation.x = -Math.PI / 2;
+        body.position.y = -.1;
+
         touchPlane = new TouchPlane( 
           fingers.tips , 
-          position , 
-          normal , 
-          x , y , 
+          body,
+          [x,y],
           bufferDistance 
         );
 
         scene.add( touchPlane.body )
+
+        touchPlaneBody = new TouchPlaneBody( touchPlane );
+
+
+        var geo = new THREE.PlaneBufferGeometry( 10 , 10 , 100 , 100 );
+        var mat = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          wireframe: true
+        });
+
+        var plane = new THREE.Mesh( geo , mat );
+
+        plane.position.z = -bufferDistance/1.1;
+        panPlane = new PanPlane( plane , touchPlane );
+
+
+        var body = new THREE.Object3D();
+        body.position.y = .4;
+        body.position.z = .221;
+        body.rotation.x = Math.PI / 2;
+
+
+
+        button = new Button("TEST", 1, fingers.tips , body , .03);
+        plane.add( button.body );
 
       }
 
@@ -114,6 +155,8 @@
 
         fingers.update( f );
         touchPlane.update();
+        panPlane.update();
+        button.update();
 
         renderer.render( scene , camera );
 
