@@ -7,6 +7,8 @@ function Button( string , size , touchers , body , bufferDistance ){
   this.title.scale.multiplyScalar( .001 );
   this.title.material.opacity = .5;
 
+  this.touchingIDs = [];
+  this.hoveringIDs = [];
 
   console.log( this.title )
 
@@ -52,14 +54,14 @@ function Button( string , size , touchers , body , bufferDistance ){
 
 
   this.touchPlane.addTouchDownEvent( function( e ){ this._touchDown( e ); }.bind( this ));
-  this.touchPlane.addTouchDownEvent( function( e ){ this._touchUp( e ); }.bind( this ));
+  this.touchPlane.addTouchUpEvent( function( e ){ this._touchUp( e ); }.bind( this ));
 
   this.touchPlane.addHoverDownEvent( function( e ){ this._hoverDown( e ); }.bind( this ));
   this.touchPlane.addHoverUpEvent( function( e ){ this._hoverUp( e ); }.bind( this ));
 
   this.touchPlane.addHoveringEvent( function( e ){ this._hovering( e ); }.bind( this ));
 
-  this.currentlyTouched = true;
+  this.touching = false;
 
 }
 
@@ -71,26 +73,59 @@ Button.prototype.update = function(){
 
 Button.prototype._touchDown = function( e ){
 
+ if( this.touchingIDs.length == 0 ){
+    this.touchDown( e );
+  }
 
-  console.log( 'yup' )
+  this.touchingIDs.push( e.id );
+ 
 }
 
 Button.prototype._touchUp = function( e ){
 
-  console.log( 'up' )
+  for( var i = 0; i < this.touchingIDs.length; i++ ){
+    if( this.touchingIDs[i] == e.id ){
+      this.touchingIDs.splice( i , 1 );
+    }
+  }
+
+  if( this.touchingIDs.length == 0 ){
+    this.touchUp( e );
+  }
+
 }
 Button.prototype._hoverDown = function( e ){
 
-  this.title.material.opacity = 1.;
+  if( this.hoveringIDs.length == 0 ){
+    this.title.material.opacity = 1.;
+    this.hoverDown( e );
+  }
+
+  this.hoveringIDs.push( e.id );
 
 }
 
 Button.prototype._hoverUp = function( e ){
-  this.title.material.opacity = .5;
+  
+  for( var i = 0; i < this.hoveringIDs.length; i++ ){
+    if( this.hoveringIDs[i] == e.id ){
+      this.hoveringIDs.splice( i , 1 );
+    }
+  }
+
+  if( this.hoveringIDs.length == 0 ){
+    this.title.material.opacity = .5;
+    this.hoverUp( e );
+  }
 }
 
 Button.prototype._hovering = function( e ){
 
 }
+Button.prototype.touchUp = function(){}
+Button.prototype.touchDown = function(){}
+Button.prototype.hoverUp = function(){}
+Button.prototype.hoverDown = function(){}
+
 
 
