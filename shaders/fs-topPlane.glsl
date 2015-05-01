@@ -3,6 +3,7 @@ const int size = @SIZE;
 uniform vec3 touchers[ size ];
 uniform float touching;
 uniform float bufferDistance;
+uniform vec2 scale;
 
 varying float vDist; // .w is which toucher
 varying vec3 vNorm;
@@ -20,6 +21,15 @@ void main(){
 	float y = sin( vUv.y * 300.);
 
 
+	vec2 xy = vUv - vec2( .5 ) ;
+	xy *= 2.;
+
+	if( 
+		abs( xy.x ) > 1. - ( .02 /  scale.x  ) || 
+		abs( xy.y ) > 1. - ( .02 /  scale.y  )
+	){ 
+		col = vec4( baseCol ,1. ); 
+	}
 
 	//if( x > bandSize || y > bandSize ){ col = vec4( baseCol ,1. ); }
 

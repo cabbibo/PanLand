@@ -11,7 +11,8 @@ function TouchPlaneBody( touchPlane ){
     touchers:{ type:"v3v" , value: touchers },
     touching:{ type: "f" , value: 0 },
     bufferDistance: { type:"f" , value: tp.bufferDistance },
-    distanceCutoff: { type:"f", value: .2 }
+    distanceCutoff: { type:"f", value: .2 },
+    scale: { type:"v2" , value: new THREE.Vector2( tp.x , tp.y ) }
   }
 
   var vs = shaders.setValue( shaders.vs.topPlane , 'SIZE' , touchers.length );

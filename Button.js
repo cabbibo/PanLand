@@ -67,12 +67,15 @@ Button.prototype.update = function(){
 Button.prototype._touchDown = function( e ){
 
   this.touchDown( e );
+
+  this.title.material.color.setRGB( .4 , 1. , .6 )
   this.touching = true;
  
 }
 
 Button.prototype._touchUp = function( e ){
 
+  this.title.material.color.setRGB( 1. , 1. , 1. )
   this.touchUp( e );
   this.touching = false;
 
